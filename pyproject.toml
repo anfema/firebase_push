@@ -1,0 +1,60 @@
+[build-system]
+requires = ["flit_core >=3.7,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "firebase_push"
+description = "Firebase push notifications for Django, based on official SDK"
+# readme = "README.md"
+keywords = ["django", "utils"]
+license = {text = "MIT"}
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries",
+]
+dynamic = ["version"]
+requires-python = ">=3.11"
+dependencies = [
+    "Django>=4.1",
+    "celery>=5.2",
+    "firebase-admin>=6.0",
+    "django-celery-results>=2.4.0",
+    "djangorestframework>=3.14.0"
+]
+authors = [{name = "Johannes Schriewer", email = "j.schriewer@anfe.ma"}]
+
+[project.urls]
+Home = "https://github.com/anfema/firebase_push"
+
+# [project.scripts]
+# firebase_push = "my_package.module:function"  # django.core.management:execute_from_command_line
+
+
+# define the module to package since it is named differently
+[tool.flit.module]
+name = "firebase_push"
+
+#[tool.flit.sdist]
+#include = ["doc/"]
+#exclude = ["doc/*.html"]
+
+#[tool.flit.external-data]
+#directory = "data"
+
+
+[tool.black]
+target-version = ['py311']
+line-length = 120
+
+
+[tool.isort]
+profile = "black"
+line_length = 120
+known_first_party = "firebase_push"
+lines_after_imports = 2

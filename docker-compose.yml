@@ -1,0 +1,101 @@
+# docker-compose file for development
+
+volumes:
+  media_files:
+  static_files:
+  redis_data:
+  postgres_data:
+
+
+services:
+  db:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # - ./db_dumps:/db_dumps
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  cache:
+    image: redis:6.2-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  task_worker:
+    image: firebase-push-dev # built by `web` container
+    environment:
+      # pass settings from `.env` file to the container (automatically loaded):
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-demo.settings.docker}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    command:
+      [
+        "python",
+        "scripts/auto_restart.py",
+        "celery",
+        "--app",
+        "demo",
+        "worker"
+      ]
+    volumes:
+      - .:/code
+    stop_signal: SIGINT
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - USERNAME=${DJANGO_CONTAINER_USERNAME:-code}
+        - USER_UID=${DJANGO_CONTAINER_USER_ID:-1000}
+        - USER_GID=${DJANGO_CONTAINER_GROUP_ID:-1000}
+    image: firebase-push-dev
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      # pass settings from `.env` file to the container (automatically loaded):
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-demo.settings.docker}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - BASE_URL=${BASE_URL}
+    volumes:
+      - .:/code
+    ports:
+      - "${DJANGO_HOST_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl http://localhost:8000" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s

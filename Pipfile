@@ -1,0 +1,26 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[[source]]
+url = "http://__token__:${PYPI_PRIVATE_TOKEN}@algeciras.anfema.net:8200/simple/"
+verify_ssl = false
+name = "anfema"
+
+[packages]
+firebase_push = {editable = true, path = "."}
+celery = {extras = ["redis"], version = "*"}
+redis = "*"
+psycopg2 = "*"
+python-dotenv = "*"
+watchfiles = "*"
+
+[dev-packages]
+black = "*"
+isort = "*"
+pre-commit = "*"
+debugpy = "*"
+
+[requires]
+python_version = "3.11"

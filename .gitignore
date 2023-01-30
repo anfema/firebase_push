@@ -1,0 +1,8 @@
+.env
+dist/
+media/
+static/
+
+demo/settings/local.py
+
+__pycache__
