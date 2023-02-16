@@ -1,10 +1,13 @@
 from typing import Any
 from django.db.models import QuerySet
+from django.utils.module_loading import import_string
 from django.http import HttpRequest
 from django.contrib import admin
 from django.conf import settings
 
 from firebase_push.models import FCMDevice, FCMHistory, FCMTopic
+
+FCMHistory = import_string(settings.FCM_PUSH_HISTORY_CLASS)
 
 
 @admin.register(FCMDevice)

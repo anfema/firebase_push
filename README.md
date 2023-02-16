@@ -25,7 +25,18 @@ Firebase cloud messaging for Django with original Google SDK.
         ...
     ]
     ```
-4. Run `manage.py migrate`
+4. Add a `FCMHistory` class to your application:
+  ```python
+  from firebase_push.models import FCMHistoryBase
+
+  class FCMHistory(FCMHistoryBase):
+    pass
+  ```
+5. Point the setting `FCM_PUSH_HISTORY_CLASS` to that class path:
+  ```python
+  FCM_PUSH_HISTORY_CLASS = "demo.models.FCMHistory"
+  ```
+6. Run `manage.py makemigrations` and `manage.py migrate`
 5. Do not forget to configure REST-Framework authentication (or supply CSRF
    Tokens when calling the API :S)
 

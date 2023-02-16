@@ -100,3 +100,5 @@ STATIC_URL = "static/"
 MEDIA_URL = "media/"
 
 from firebase_push.conf.settings import *
+
+FCM_PUSH_HISTORY_CLASS = "demo.models.FCMHistory"

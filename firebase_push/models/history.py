@@ -2,7 +2,7 @@ from django.utils.translation import gettext_lazy as _
 from django.db import models
 
 
-class FCMHistory(models.Model):
+class FCMHistoryBase(models.Model):
     class Status(models.TextChoices):
         PENDING = "pending", _("Pending")
         SENT = "sent", _("Sent")
@@ -16,3 +16,6 @@ class FCMHistory(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
