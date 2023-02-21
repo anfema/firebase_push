@@ -1,6 +1,8 @@
 from typing import Sequence, Optional, Union, Tuple, Any
 from datetime import datetime
 import re
+from copy import copy
+from uuid import uuid4
 
 from firebase_admin.messaging import (
     Message,
@@ -23,17 +25,27 @@ from django.utils.module_loading import import_string
 from django.db.models import Model, QuerySet, Q
 from django.conf import settings
 
-from firebase_push.models import FCMDevice, FCMTopic
+from firebase_push.models import FCMDevice, FCMTopic, FCMHistoryBase
 
-from .tasks import send_message_to_devices, send_message_to_topics, send_message_to_users
+from .tasks import send_message
 
-UserModel: Model = import_string(settings.FCM_USER_MODEL or settings.AUTH_USER_MODEL)
+if settings.FCM_USER_MODEL:
+    UserModel: Model = import_string(settings.FCM_USER_MODEL)
+else:
+    from django.contrib.auth import get_user_model
+
+    UserModel = get_user_model()
+
+FCMHistory: FCMHistoryBase = import_string(settings.FCM_PUSH_HISTORY_MODEL)
 
 #
 # TODO:
 #
 # - Image content for notifications on android /web
 # - Launch image for iOS apps
+
+# TODO: Filter for topics if one is defined
+# TODO: do not send notifications to disabled devices
 
 
 class PushMessageBase:
@@ -83,6 +95,9 @@ class PushMessageBase:
         self.web_actions: Optional[Tuple[str, str, str]] = None
         self.web_icon: Optional[str] = None
 
+        # Internal message id
+        self.uuid = uuid4()
+
     @property
     def topics(self) -> list[str]:
         return self._topics
@@ -91,10 +106,14 @@ class PushMessageBase:
     def topics(self, value: list[str]):
         self._topics = value
 
-    def add_topic(self, topic: str):
+    def add_topic(self, topic: Union[str, FCMTopic]):
+        if isinstance(topic, FCMTopic):
+            topic = topic.name
         self._topics.append(topic)
 
-    def remove_topic(self, topic: str):
+    def remove_topic(self, topic: Union[str, FCMTopic]):
+        if isinstance(topic, FCMTopic):
+            topic = topic.name
         self._topics.remove(topic)
 
     @property
@@ -105,11 +124,21 @@ class PushMessageBase:
     def devices(self, value: list[str]):
         self._devices = value
 
-    def add_device(self, registration_id: str):
-        self._devices.append(registration_id)
+    def add_device(self, registration_id: Optional[str] = None, device: Optional[FCMDevice] = None):
+        if registration_id:
+            self._devices.append(registration_id)
+        elif device:
+            self._devices.append(device.registration_id)
+        else:
+            raise ValueError("Either specify registration_id or device")
 
-    def remove_device(self, registration_id: str):
-        self._devices.remove(registration_id)
+    def remove_device(self, registration_id: Optional[str] = None, device: Optional[FCMDevice] = None):
+        if registration_id:
+            self._devices.remove(registration_id)
+        elif device:
+            self._devices.remove(device.registration_id)
+        else:
+            raise ValueError("Either specify registration_id or device")
 
     @property
     def users(self) -> Optional[QuerySet]:
@@ -142,23 +171,142 @@ class PushMessageBase:
         else:
             self._users.remove(Q(pk=user.pk))
 
+    def create_history_entries(
+        self,
+        message: Message,
+        user: Optional[UserModel] = None,
+        topic: Optional[str] = None,
+        device: Optional[FCMDevice] = None,
+    ) -> list[FCMHistoryBase]:
+        """Create a FCMHistory entry for each sent message
+
+        Override this function to add custom data to the history objects.
+        Do not save the objects yet, this function will be called at the
+        appropriate time and saving of objects will be done by the caller.
+
+        This will be bulk created, so no fired signals or calls on the
+        save() function of the model.
+
+        :returns: List of unsaved FCMHistory entries
+        """
+        message_data = str(message)
+        entries: list[FCMHistory] = []
+
+        if user is not None:
+            entries.append(
+                FCMHistory(
+                    message_data=message_data,
+                    message_id=self.uuid,
+                    user=user,
+                    device=device,
+                    topic=FCMTopic.objects.get(name=topic) if topic else None,
+                    status=FCMHistoryBase.Status.PENDING,
+                )
+            )
+        elif topic and device:
+            entries.append(
+                FCMHistory(
+                    message_data=message_data,
+                    message_id=self.uuid,
+                    user=device.user,
+                    device=device,
+                    topic=FCMTopic.objects.get(name=topic),
+                    status=FCMHistoryBase.Status.PENDING,
+                )
+            )
+        elif topic:
+            for device in FCMDevice.objects.filter(topic__name=topic):
+                entries.append(
+                    FCMHistory(
+                        message_data=message_data,
+                        message_id=self.uuid,
+                        user=device.user,
+                        device=device,
+                        topic=FCMTopic.objects.get(name=topic),
+                        status=FCMHistoryBase.Status.PENDING,
+                    )
+                )
+        elif device:
+            entries.append(
+                FCMHistory(
+                    message_data=message_data,
+                    message_id=self.uuid,
+                    device=device,
+                    topic=FCMTopic.objects.get(name=topic) if topic else None,
+                    status=FCMHistoryBase.Status.PENDING,
+                )
+            )
+        return entries
+
+    def fanout(self) -> list[Tuple[list[FCMHistoryBase], Message]]:
+        """Create message object for each device we want to address
+
+        :returns: List of messages to send to firebase
+        """
+        rendered = self.render()
+        topic = self._topics[0] if len(self._topics) > 0 else None
+
+        messages: list[Tuple[list[FCMHistoryBase], Message]] = []
+        if self._users is not None:
+            for user in self._users:
+                for device in FCMDevice.objects.filter(user=user):
+                    msg = copy(rendered)
+                    msg.token = device.registration_id
+                    history = self.create_history_entries(msg, device=device, user=user, topic=topic)
+                    messages.append((history, msg))
+        elif self._topics:
+            for topic in self._topics:
+                for device in FCMDevice.objects.filter(topic__name=topic):
+                    msg = copy(rendered)
+                    msg.token = device.registration_id
+                    history = self.create_history_entries(msg, device=device, topic=topic)
+                    messages.append((history, msg))
+        elif self._devices:
+            for device in self._devices:
+                msg = copy(rendered)
+                msg.token = device
+                history = self.create_history_entries(msg, device=device, topic=topic)
+                messages.append((history, msg))
+
+        # extract all history items and flatten the arrays
+        history: list[FCMHistory] = []
+        for history_items, _ in messages:
+            history.extend(history_items)
+        FCMHistory.objects.bulk_create(history)
+
+        return messages
+
     def send(self):
+        """Send a fully configured message in the background
+
+        Raises:
+            UserModel.DoesNotExist: If a user is configured and does not exist anymore
+            FCMDevice.DoesNotExist: If a device has been configured that does not exist anymore
+            ValueError: When neither user, topic or device is configured
+        """
         if self._users is not None:
             if not self._users.exists():
                 raise UserModel.DoesNotExist
-            return send_message_to_users(self, self.users)
+            return send_message(self)
         if self._topics:
             for topic in self._topics:
                 if not FCMTopic.objects.filter(name=topic).exists():
                     FCMTopic.objects.create(name=topic)
-            return send_message_to_topics(self, self._topics)
+            return send_message(self)
         if self._devices:
             if not FCMDevice.objects.filter(registration_id__in=self._devices).exists():
                 raise FCMDevice.DoesNotExist
-            return send_message_to_devices(self, self._devices)
+            return send_message(self)
         raise ValueError("No target to send message to, either set a user, device or topic")
 
     def render(self) -> Message:
+        """Render a message into firebase objects
+
+        This will be overridden by subclasses to facilitate different message types,
+        for example internationalized vs standard messages/.
+
+        :returns: Firebase Message object without receiving device token set
+        """
         # Apple specific
         aps = Aps(
             badge=self.badge_count,
@@ -189,12 +337,13 @@ class PushMessageBase:
 
         # Web specific
         actions: list[WebpushNotificationAction] = []
-        for (title, action, icon) in self.web_actions:
-            actions.append(WebpushNotificationAction(action, title, icon))
+        if self.web_actions:
+            for (title, action, icon) in self.web_actions:
+                actions.append(WebpushNotificationAction(action, title, icon))
 
         web_notification = WebpushNotification(
             icon=self.web_icon,
-            language="en",
+            language=settings.LANGUAGE_CODE or "en",
             actions=actions,
         )
         web = WebpushConfig(notification=web_notification)
@@ -353,7 +502,7 @@ class LocalizedPushMessage(PushMessageBase):
             title=format_lazy(self._web_loc(self.title_loc), *self.title_args),
             body=format_lazy(self._web_loc(self.body_loc), *self.body_args),
             icon=self.web_icon,
-            language="en",
+            language=settings.LANGUAGE_CODE or "en",
             actions=actions,
         )
 

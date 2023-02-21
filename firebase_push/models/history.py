@@ -12,6 +12,7 @@ class FCMHistoryBase(models.Model):
         FAILED = "failed", _("Failed")
 
     message_data = models.JSONField()
+    message_id = models.UUIDField()
     device = models.ForeignKey("firebase_push.FCMDevice", on_delete=models.SET_NULL, blank=True, null=True)
     user = models.ForeignKey(UserModel, on_delete=models.CASCADE, null=False, blank=False)
     topic = models.ForeignKey("firebase_push.FCMTopic", on_delete=models.SET_NULL, blank=True, null=True)
