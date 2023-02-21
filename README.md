@@ -77,6 +77,54 @@ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service_account.json
 
 ### API Endpoints for devices
 
+- `firebase-push/`: registration endpoint, call this on app-activation
+
+Payload:
+
+```json
+{
+	"registration_id": "<fcm_token>",
+	"topics": [ "default" ],
+	"platform": "ios",
+	"app_version": "2.0"
+}
+```
+
+- `registration_id`: FCM Token from Firebase SDK
+- `topics`: List of topics to subscribe to. If left out defaults to `default`
+- `platform`: app platform, one of `android`, `ios`, `web`, if left out defaults to `unknown`
+- `app_version`: app version string, if left out defaults to empty string
+
+Reply:
+
+```json
+{
+	"registration_id": "<FCM token>",
+	"topics": [
+		"default"
+	],
+	"platform": "ios",
+	"app_version": "2.0",
+	"created_at": "2023-01-30T15:20:44.265191",
+	"updated_at": "2023-01-30T15:20:44.265208"
+}
+```
+
+You may `POST` new values, autentication for the user is handled by REST-Framework. If the user of the registration
+changes, the old registration is removed and a new one is created. This is done to avoid receiving notifications of
+other users when frequently switching accounts while testing the app.
+
+To update for example the subscribed topics you may call `PATCH` on the endpoint with appended registration ID (like
+`firebase-push/<bla>`) and only specify the changed values in the payload. If the registration is currently recorded
+for a different user, the old registration will be removed as with `POST`. Calling the endpoint with `PATCH` is possible
+but the utility of this is limited, better stick to `POST` and include all values to make sure everything is recorded
+in the DB correctly.
+
+If you call the endpoint with `GET` you will get a list of all registrations of the current user.
+
+If you call the endpoint with `DELETE` and appended registration ID (like `firebase-push/<bla>`) the push registration
+will be deleted from the server if the current user owns it and you will receive a `204 No Content` response.
+
 ### DB Models
 
 There are 3 Models of which one is an abstract model.
