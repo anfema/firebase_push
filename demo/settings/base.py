@@ -102,4 +102,4 @@ MEDIA_URL = "media/"
 
 from firebase_push.conf.settings import *
 
-FCM_PUSH_HISTORY_CLASS = "demo_app.models.FCMHistory"
+FCM_PUSH_HISTORY_MODEL = "demo_app.models.FCMHistory"

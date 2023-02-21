@@ -26,7 +26,7 @@ class FCMTopicAdmin(admin.ModelAdmin):
 
 
 try:
-    FCMHistory = import_string(settings.FCM_PUSH_HISTORY_CLASS)
+    FCMHistory = import_string(settings.FCM_PUSH_HISTORY_MODEL)
 
     @admin.register(FCMHistory)
     class FCMHistoryAdmin(admin.ModelAdmin):

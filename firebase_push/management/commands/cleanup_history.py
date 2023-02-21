@@ -8,7 +8,7 @@ from firebase_push.models import FCMHistoryBase
 
 
 def cleanup_history(days: int):
-    FCMHistory = import_string(settings.FCM_PUSH_HISTORY_CLASS)
+    FCMHistory = import_string(settings.FCM_PUSH_HISTORY_MODEL)
     entries = FCMHistory.objects.filter(updated_at__lt=timezone.now() - timedelta(days=days))
     pending = entries.filter(status=FCMHistoryBase.Status.PENDING).count()
     sent = entries.filter(status=FCMHistoryBase.Status.SENT).count()
