@@ -32,9 +32,9 @@ Firebase cloud messaging for Django with original Google SDK.
   class FCMHistory(FCMHistoryBase):
     pass
   ```
-5. Point the setting `FCM_PUSH_HISTORY_CLASS` to that class path:
+5. Point the setting `FCM_PUSH_HISTORY_MODEL` to that class path:
   ```python
-  FCM_PUSH_HISTORY_CLASS = "demo.models.FCMHistory"
+  FCM_PUSH_HISTORY_MODEL = "demo.models.FCMHistory"
   ```
 6. Run `manage.py makemigrations` and `manage.py migrate`
 5. Do not forget to configure REST-Framework authentication (or supply CSRF
@@ -75,4 +75,141 @@ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service_account.json
 
 ## Usage
 
-// TODO: Document API
+### API Endpoints for devices
+
+### DB Models
+
+There are 3 Models of which one is an abstract model.
+
+1. `FCMDevice`: The device registration, contains FCM tokens and some metadata about the device
+2. `FCMTopic`: A topic for which a device can register. Can be used to filter which messages to send to which devices
+3. `FCMHistory` aka `FCMHistoryBase`: This is the abstract model for the push notification history. You can add your
+  own fields to this to save additional information about a message.
+
+#### `FCMDevice`
+
+- `registration_id` the FCM Token
+- `user` user to which this device belongs, devices will cascade delete with this user
+- `topics` topics which the device subscribes to
+- `platform` platform as reported by the device on registration, one of `android`, `ios`, `web`, `unknown`
+- `app_version` stringified application version as reported by device
+- `created_at`, `updated_at`, `disabled_at` some dates used by the cleanup scripts
+
+#### `FCMHistory`
+
+- `message_id` internal UUID to identify messages that were sent in one batch
+- `message_data` JSON data that was sent to firebase
+- `device` device this message was sent to (will be set to `None` if the device is removed)
+- `user` the user that this message was sent to (will cascade delete the history if removed)
+- `topic` optional: topic this message was sent to
+- `status` one of `pending`, `sent`, `failed`
+- `error_message` if `status` is failed this contains the error message
+- `created_at`, `updated_at` some dates used by the cleanup scripts
+
+### Message sending
+
+To send a message use one of the `PushMessageBase` subclasses like provided:
+
+- `PushMessage`: Basic push message class, no i18n logic
+- `LocalizedPushMessage`: Push message with i18n logic
+
+Basic interface is like this:
+
+```python
+from firebase_push.message import PushMessage
+
+msg = PushMessage("Title", "body text", link="http://google.com")
+msg.add_user(some_user)
+msg.add_topic('test')
+msg.send()
+```
+
+This will send the message to all devices registered to the user `some_user` that subscribe the `test` topic.
+Sending will be performed in the background via Celery task. The celery task will update the automatically
+created `FCMHistory` object once it has been processed. If you send to a topic that does not exist it is created on the
+spot, but will then of course reach no device.
+
+There are optional additional attributes you may set for a message:
+
+Common attributes:
+
+- `collapse_id`: If multiple messages with this ID are sent they are collapsed
+- `badge_count`: Badge count to display on app icon, may not work for all android devices, set to 0 to remove badge
+- `data_available`: Set to `True` to trigger the app to be launched in background for a data download.
+- `sound`: Play a sound for the notification, set to `default` to play default sound or to name of sound file in
+  app-bundle otherwise.
+- `data`: Custom dictionary of strings to append as data to the message
+
+Android specific:
+
+- `android_icon`: Icon for the notification
+- `color`: CSS-Style Hex color for the notification
+- `expiration`: Date until which the message is valid to be delivered
+- `is_priority`: Set to `True` to make it a priority message
+
+Web specific:
+
+- `web_actions`: Actions for the push notifications, is a tuple: `("title", "action", "icon")`
+- `web_icon`: Icon for the notification
+
+#### `LocalizedPushMessage`
+
+To send a localizable push message you can use Android style format strings and replacement parameters.
+Web-Push notifications do not have a local stored translation table so they will be sent by using Django's
+translation facilities, so make sure to set the correct language environment before sending a message.
+
+To create a localization for the Web-Push strings convert them to python `.format()` style strings and add
+them to the gettext `.po` file.
+
+Basic interface works like this:
+
+```python
+from firebase_push.message import PushMessage
+
+msg = PushMessage(
+  "Title with %s",
+  "body number %d, string: %s",
+  link="http://google.com"
+  title_args=["placeholders"],
+  body_args=[10, 'a string']
+)
+msg.add_user(some_user)
+msg.add_topic('test')
+msg.send()
+```
+
+This will send a translateable message. The clients have to have translation tables.
+
+- Android needs just `Title with %s` and `body number %d, string: %s` in the strings
+- iOS will use something like `Title with %@` and `body number %@, string: %@`
+- For Django/Web you will need `Title with {:s}` and `body number {:d}, string: {:s}`
+
+It is possible to add positioning hints:
+
+- Android `%1$s` and `%2$d` to declare parameters as first and second
+- iOS will have it replaced with `%1$@` and `%2$@`
+- For Django/Web use `{1:s}` and `{2:s}`
+
+There are some additional attributes:
+
+Apple specific:
+
+- `action_loc`: Identifier for the action item that is displayed (optional, will not display an action if undefined)
+
+Web specific:
+
+- `web_actions`: `action` and `title` should be translatable strings or translation identifiers
+
+### Cleanup
+
+Automatic cleanup of outdated device registrations and push notification history works by calling management commands.
+By default history is removed after 6 months, device registrations are _disabled_ after 2 months as per recommendation
+from google. Disabled devices are removed after them being disabled for 2 months.
+
+- `python manage.py age_devices [-s <days>]`
+- `python manage.py cleanup_devices [-s <days>]`
+- `python manage.py cleanup_history [-s <days>]`
+
+Attention: As `firebase_push` does not control what is saved in the push notification history the `cleanup_history`
+command may fail on unknown database constraints. Please duplicate the management command if that may happen with your
+implementation.
