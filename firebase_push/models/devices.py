@@ -20,6 +20,7 @@ class FCMDevice(models.Model):
     )
     app_version = models.CharField(max_length=255, default="", blank=True)
 
+    disabled_at = models.DateTimeField(default=None, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

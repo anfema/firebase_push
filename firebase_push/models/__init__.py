@@ -1,3 +1,3 @@
 from .devices import FCMDevice
-from .history import FCMHistory
+from .history import FCMHistoryBase
 from .topics import FCMTopic

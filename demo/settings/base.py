@@ -33,6 +33,7 @@ ALLOWED_HOSTS.append(FQDN)
 
 
 INSTALLED_APPS = [
+    "demo_app",
     "firebase_push",
     "rest_framework",
     "django_celery_results",
@@ -101,4 +102,4 @@ MEDIA_URL = "media/"
 
 from firebase_push.conf.settings import *
 
-FCM_PUSH_HISTORY_CLASS = "demo.models.FCMHistory"
+FCM_PUSH_HISTORY_CLASS = "demo_app.models.FCMHistory"
