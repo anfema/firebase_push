@@ -45,7 +45,6 @@ FCMHistory: FCMHistoryBase = import_string(settings.FCM_PUSH_HISTORY_MODEL)
 # - Launch image for iOS apps
 
 # TODO: Filter for topics if one is defined
-# TODO: do not send notifications to disabled devices
 
 
 class PushMessageBase:
@@ -215,7 +214,7 @@ class PushMessageBase:
                 )
             )
         elif topic:
-            for device in FCMDevice.objects.filter(topic__name=topic):
+            for device in FCMDevice.objects.filter(topic__name=topic, disabled_at__isnull=True):
                 entries.append(
                     FCMHistory(
                         message_data=message_data,
@@ -249,20 +248,22 @@ class PushMessageBase:
         messages: list[Tuple[list[FCMHistoryBase], Message]] = []
         if self._users is not None:
             for user in self._users:
-                for device in FCMDevice.objects.filter(user=user):
+                for device in FCMDevice.objects.filter(user=user, disabled_at__isnull=True):
                     msg = copy(rendered)
                     msg.token = device.registration_id
                     history = self.create_history_entries(msg, device=device, user=user, topic=topic)
                     messages.append((history, msg))
         elif self._topics:
             for topic in self._topics:
-                for device in FCMDevice.objects.filter(topic__name=topic):
+                for device in FCMDevice.objects.filter(topic__name=topic, disabled_at__isnull=True):
                     msg = copy(rendered)
                     msg.token = device.registration_id
                     history = self.create_history_entries(msg, device=device, topic=topic)
                     messages.append((history, msg))
         elif self._devices:
             for device in self._devices:
+                if device.disabled_at is not None:
+                    continue
                 msg = copy(rendered)
                 msg.token = device
                 history = self.create_history_entries(msg, device=device, topic=topic)
@@ -296,6 +297,8 @@ class PushMessageBase:
         if self._devices:
             if not FCMDevice.objects.filter(registration_id__in=self._devices).exists():
                 raise FCMDevice.DoesNotExist
+            if not FCMDevice.objects.filter(registration_id__in=self._devices, disabled_at__isnull=True).exists():
+                raise AttributeError("No enabled devices found")
             return send_message(self)
         raise ValueError("No target to send message to, either set a user, device or topic")
 
