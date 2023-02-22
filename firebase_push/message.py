@@ -44,8 +44,6 @@ FCMHistory: FCMHistoryBase = import_string(settings.FCM_PUSH_HISTORY_MODEL)
 # - Image content for notifications on android /web
 # - Launch image for iOS apps
 
-# TODO: Filter for topics if one is defined
-
 
 class PushMessageBase:
     """Push notification message base class
@@ -243,12 +241,13 @@ class PushMessageBase:
         :returns: List of messages to send to firebase
         """
         rendered = self.render()
-        topic = self._topics[0] if len(self._topics) > 0 else None
+        topic = self._topics[0] if len(self._topics) > 0 else "default"
+        topic_obj = FCMTopic.objects.get(name=topic)
 
         messages: list[Tuple[list[FCMHistoryBase], Message]] = []
         if self._users is not None:
             for user in self._users:
-                for device in FCMDevice.objects.filter(user=user, disabled_at__isnull=True):
+                for device in FCMDevice.objects.filter(user=user, disabled_at__isnull=True, topics=topic_obj):
                     msg = copy(rendered)
                     msg.token = device.registration_id
                     history = self.create_history_entries(msg, device=device, user=user, topic=topic)
@@ -263,6 +262,8 @@ class PushMessageBase:
         elif self._devices:
             for device in self._devices:
                 if device.disabled_at is not None:
+                    continue
+                if not device.topics.contains(topic_obj):
                     continue
                 msg = copy(rendered)
                 msg.token = device
@@ -284,7 +285,11 @@ class PushMessageBase:
             UserModel.DoesNotExist: If a user is configured and does not exist anymore
             FCMDevice.DoesNotExist: If a device has been configured that does not exist anymore
             ValueError: When neither user, topic or device is configured
+            AttributeError: When sending to a device but the device does not subscribe to the topic or is disabled
         """
+
+        topic = self._topics[0] if len(self._topics) > 0 else "default"
+
         if self._users is not None:
             if not self._users.exists():
                 raise UserModel.DoesNotExist
@@ -297,8 +302,10 @@ class PushMessageBase:
         if self._devices:
             if not FCMDevice.objects.filter(registration_id__in=self._devices).exists():
                 raise FCMDevice.DoesNotExist
-            if not FCMDevice.objects.filter(registration_id__in=self._devices, disabled_at__isnull=True).exists():
-                raise AttributeError("No enabled devices found")
+            if not FCMDevice.objects.filter(
+                registration_id__in=self._devices, disabled_at__isnull=True, topics__name=topic
+            ).exists():
+                raise AttributeError("No enabled devices subscribing to the topic found")
             return send_message(self)
         raise ValueError("No target to send message to, either set a user, device or topic")
 
