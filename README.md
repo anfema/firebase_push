@@ -73,9 +73,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service_account.json
 
 // TODO: Add information about celery
 
-## Usage
-
-### API Endpoints for devices
+## API Endpoints for devices
 
 - `firebase-push/`: registration endpoint, call this on app-activation
 
@@ -125,7 +123,7 @@ If you call the endpoint with `GET` you will get a list of all registrations of 
 If you call the endpoint with `DELETE` and appended registration ID (like `firebase-push/<bla>`) the push registration
 will be deleted from the server if the current user owns it and you will receive a `204 No Content` response.
 
-### DB Models
+## DB Models
 
 There are 3 Models of which one is an abstract model.
 
@@ -134,7 +132,7 @@ There are 3 Models of which one is an abstract model.
 3. `FCMHistory` aka `FCMHistoryBase`: This is the abstract model for the push notification history. You can add your
   own fields to this to save additional information about a message.
 
-#### `FCMDevice`
+### `FCMDevice`
 
 - `registration_id` the FCM Token
 - `user` user to which this device belongs, devices will cascade delete with this user
@@ -143,7 +141,7 @@ There are 3 Models of which one is an abstract model.
 - `app_version` stringified application version as reported by device
 - `created_at`, `updated_at`, `disabled_at` some dates used by the cleanup scripts
 
-#### `FCMHistory`
+### `FCMHistoryBase`
 
 - `message_id` internal UUID to identify messages that were sent in one batch
 - `message_data` JSON data that was sent to firebase
@@ -154,7 +152,38 @@ There are 3 Models of which one is an abstract model.
 - `error_message` if `status` is failed this contains the error message
 - `created_at`, `updated_at` some dates used by the cleanup scripts
 
-### Message sending
+## On overriding `FCMHistoryBase`:
+
+if you override the history class to add custom data to it, it is probably a good idea to override the
+`PushMessage` classes too to hook into history item creation:
+
+```python
+# Data model
+from django.db import models
+from firebase_push.models import FCMHistoryBase
+
+class FCMHistory(FCMHistoryBase):
+  foobar = models.CharField(max_length=255, null=False, blank=False)
+
+# Push message override
+from firebase_push.message import PushMessage
+
+class MyPushMessage(PushMessage):
+
+  def __init__(self, title: str, body: str, link: Optional[str]=None, foobar: str="nothing"):
+    super().__init(title, body, link=link)
+    self.foobar = foobar
+
+  def create_history_entries(self, *args, **kwargs) -> list[FCMHistory]:
+    entries = super().create_history_entries(*args, **kwargs)
+
+    for entry in entries:
+      entry.foobar = self.foobar
+    
+    return entries
+```
+
+## Message sending
 
 To send a message use one of the `PushMessageBase` subclasses like provided:
 
@@ -200,7 +229,7 @@ Web specific:
 - `web_actions`: Actions for the push notifications, is a tuple: `("title", "action", "icon")`
 - `web_icon`: Icon for the notification
 
-#### `LocalizedPushMessage`
+### `LocalizedPushMessage`
 
 To send a localizable push message you can use Android style format strings and replacement parameters.
 Web-Push notifications do not have a local stored translation table so they will be sent by using Django's
@@ -248,7 +277,7 @@ Web specific:
 
 - `web_actions`: `action` and `title` should be translatable strings or translation identifiers
 
-### Cleanup
+## Cleanup
 
 Automatic cleanup of outdated device registrations and push notification history works by calling management commands.
 By default history is removed after 6 months, device registrations are _disabled_ after 2 months as per recommendation
