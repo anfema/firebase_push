@@ -42,10 +42,13 @@ class FCMDeviceSerializer(serializers.ModelSerializer):
         # when user does not match, destroy registration and re-create
         user = get_user(self.context["request"])
         if instance.user.id != user:
-            validated_data['registration_id'] = instance.registration_id
+            validated_data["registration_id"] = instance.registration_id
             instance.delete()
             return self.create(validated_data)
 
         # user matches, make sure to add the user id to validated_data
         validated_data["user_id"] = user
+
+        # Someone updated the device, so it is active again
+        validated_data["disabled_at"] = None
         return super().update(instance, validated_data)
