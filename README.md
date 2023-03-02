@@ -255,6 +255,8 @@ msg.add_topic('test')
 msg.send()
 ```
 
+For testing you can use `msg.send(sync=True)` to send the message immediately without involving celery
+
 This will send a translateable message. The clients have to have translation tables.
 
 - Android needs just `Title with %s` and `body number %d, string: %s` in the strings
