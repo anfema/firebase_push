@@ -21,6 +21,7 @@ black = "*"
 isort = "*"
 pre-commit = "*"
 debugpy = "*"
+flake8 = "*"
 
 [requires]
 python_version = "3.11"

@@ -160,7 +160,7 @@ class LocalizedPushMessage(PushMessageBase):
             msg.webpush = web
 
         actions: list[WebpushNotificationAction] = []
-        for (title, action, icon) in self.web_actions:
+        for title, action, icon in self.web_actions:
             actions.append(WebpushNotificationAction(_(action), _(title), icon))
 
         web_notification = WebpushNotification(

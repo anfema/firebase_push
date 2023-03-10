@@ -9,7 +9,6 @@ def create_topic(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("firebase_push", "0001_initial"),
     ]
