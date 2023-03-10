@@ -31,4 +31,4 @@ class Command(BaseCommand):
         if result > 0:
             self.stdout.write(self.style.SUCCESS(f"Successfully removed {result} devices!"))
         else:
-            self.stdout.write(self.style.SUCCESS(f"No device to remove."))
+            self.stdout.write(self.style.SUCCESS("No device to remove."))

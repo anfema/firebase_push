@@ -37,4 +37,4 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"Successfully removed {pending + sent + failed} history entries"))
             self.stdout.write(self.style.NOTICE(f"(sent: {sent}, failed: {failed}, still pending: {pending})"))
         else:
-            self.stdout.write(self.style.SUCCESS(f"No history to remove."))
+            self.stdout.write(self.style.SUCCESS("No history to remove."))

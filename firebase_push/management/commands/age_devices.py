@@ -31,4 +31,4 @@ class Command(BaseCommand):
         if result > 0:
             self.stdout.write(self.style.SUCCESS(f"Successfully disabled {result} devices!"))
         else:
-            self.stdout.write(self.style.SUCCESS(f"No devices to disable."))
+            self.stdout.write(self.style.SUCCESS("No devices to disable."))
