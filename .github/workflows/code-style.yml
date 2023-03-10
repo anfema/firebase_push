@@ -9,6 +9,7 @@ on:
     branches: [main, develop]
     paths:
       - "**.py"
+  workflow_dispatch:
 
 jobs:
   code-style-checks:
