@@ -86,25 +86,41 @@ class PushMessageBase:
         self.uuid = str(uuid4())
 
     def serialize(self) -> dict[str, Any]:
-        result: dict[str, Any] = {}
-        attributes = dir(self)
-        for attr in attributes:
-            # skip internals
-            if attr.startswith("__"):
-                continue
-            # skip values that have hidden variables
-            if "_" + attr in attributes:
-                continue
-            # skip everything that is not an attribute
-            value = getattr(self, attr)
-            if inspect.ismethod(value) or inspect.isfunction(value):
-                continue
+        return dict(
+            __class__:".".join((self.__class__.__module__, self.__class__.__name__)),
+            _topics=self._topics,
+            _devices=self._devicee,
+            _users=self._users,
+            collapse_id=self.collapse_id,
+            badge_count=self.badge_count,
+            data_available=self.data_available,
+            sound=self.sound,
+            data=self.data,
+            android_icon=self.android_icon,
+            color=self.color,
+            expiration=self.expiration,
+            is_priority=self.is_priority,
+            web_actions=self.web_actions,
+            web_icon=self.web_icon,
+            uuid=self.uuid
+        )
 
-            result[attr] = value
-
-        # save the class for the deserializer
-        result["__class__"] = ".".join((self.__class__.__module__, self.__class__.__name__))
-        return result
+    def deserialize(self, data:dict[str, Any]):
+        self._topics = data['_topics']
+        self._devices = data['_devices']
+        self._users = data['_users']
+        self.collapse_id = data['collapse_id']
+        self.badge_count = data['badge_count']
+        self.data_available = data['data_available']
+        self.sound = data['sound']
+        self.data = data['data']
+        self.android_icon = data['android_icon']
+        self.color = data['color']
+        self.expiration = data['expiration']
+        self.is_priority = data['is_priority']
+        self.web_actions = data['web_actions']
+        self.web_icon = data['web_icon']
+        self.uuid = data['uuid']
 
     @classmethod
     def deserialize(cls, data: str) -> Self:
@@ -113,12 +129,7 @@ class PushMessageBase:
         # try instanciating class from serialized data
         klass = import_string(tree["__class__"])
         c = klass()
-
-        # set all attributes
-        for key, value in tree.items():
-            if key.startswith("__"):  # skip internals
-                continue
-            setattr(c, key, value)
+        c.deserialize(tree)
         return c
 
     @property

@@ -72,6 +72,29 @@ class LocalizedPushMessage(PushMessageBase):
         # with python's ``format``. Be careful, not everything will work.
         return re.sub(r"%(([0-9]*)\$)? ?([#'0-9.,\-+hl]*[a-zA-Z@])", r"{\2:\3}", _(loc))
 
+    def serialize(self) -> dict[str, Any]:
+        result = super().serialize()
+        result.update(
+            dict(
+                title_loc=self.title_loc,
+                title_args=self.title_args,
+                body_loc=self.body_loc,
+                body_args=self.body_args,
+                link=self.link,
+                action_loc=self.action_loc,
+            )
+        )
+        return result
+
+    def deserialize(self, data: dict[str, Any]):
+        super().deserialize(data)
+        self.title_loc = data["title_loc"]
+        self.title_ars = data["title_args"]
+        self.body_loc = data["body_loc"]
+        self.body_args = data["body_args"]
+        self.link = data["link"]
+        self.action_loc = data["action_loc"]
+
     def render(self) -> Message:
         if self.data is None:
             self.data = {}

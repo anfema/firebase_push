@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 from firebase_admin.messaging import Message, Notification
 
 from .base import PushMessageBase
@@ -21,6 +21,23 @@ class PushMessage(PushMessageBase):
         self.body = body
         self.link = link
         super().__init__()
+
+    def serialize(self) -> dict[str, Any]:
+        result = super().serialize()
+        result.update(
+            dict(
+                title=self.title,
+                body=self.body,
+                link=self.link,
+            )
+        )
+        return result
+
+    def deserialize(self, data: dict[str, Any]):
+        super().deserialize(data)
+        self.title = data["title"]
+        self.body = data["body"]
+        self.link = data["link"]
 
     def render(self) -> Message:
         if self.data is None:

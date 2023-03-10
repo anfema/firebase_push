@@ -166,6 +166,7 @@ class FCMHistory(FCMHistoryBase):
   foobar = models.CharField(max_length=255, null=False, blank=False)
 
 # Push message override
+from typing import Any
 from firebase_push.message import PushMessage
 
 class MyPushMessage(PushMessage):
@@ -173,6 +174,17 @@ class MyPushMessage(PushMessage):
   def __init__(self, title: str, body: str, link: Optional[str]=None, foobar: str="nothing"):
     super().__init(title, body, link=link)
     self.foobar = foobar
+
+  def serialize(self) -> dict[str, Any]:
+    result = super().serialize()
+    result.update(dict(
+      foobar=self.foobar
+    ))
+    return result
+
+  def deserialize(self, data: dict[str, Any]):
+    super().deserialize(data)
+    self.foobar = data['foobar']
 
   def create_history_entries(self, *args, **kwargs) -> list[FCMHistory]:
     entries = super().create_history_entries(*args, **kwargs)
