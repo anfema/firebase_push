@@ -2,11 +2,59 @@ from typing import Any
 
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.auth import get_user_model
+from django.db import models
 from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.utils.module_loading import import_string
+from etc.admin import CustomModelPage, admins
 
 from firebase_push.models import FCMDevice, FCMTopic
+
+
+UserModel = settings.FCM_USER_MODEL or settings.AUTH_USER_MODEL
+User = get_user_model()
+
+
+class PushSenderAdmin(admins.CustomPageModelAdmin):
+    fields = ("title", "body", "link", "user", "topic")
+    autocomplete_fields = ("user", "topic")
+
+
+class PushSender(CustomModelPage):
+    app_label = "firebase_push"
+
+    # Define some fields.
+    title = models.CharField("Push Notification Title", max_length=100, blank=True)
+    body = models.CharField("Push Notification Body", max_length=1024, blank=True)
+    link = models.CharField("Push Notification Deeplink", max_length=1024, blank=True)
+
+    user = models.ForeignKey(UserModel, on_delete=models.CASCADE)
+    topic = models.ForeignKey(FCMTopic, null=True, blank=True, on_delete=models.CASCADE)
+
+    admin_cls = PushSenderAdmin  # set admin class for this page
+
+    class Meta:
+        verbose_name = "Send Push Notification"
+
+    def save(self):
+        from firebase_push.message import PushMessage
+
+        link = self.link if self.link else None
+        pm = PushMessage(self.title, self.body, link=link)
+        pm.add_user(self.user)
+        if self.topic:
+            pm.add_topic(self.topic)
+        pm.send()
+
+        # self.bound_admin has some useful methods.
+        # self.bound_request allows you to access current HTTP request.
+        self.bound_admin.message_success(self.bound_request, "Notification queued!")
+
+        super().save()
+
+
+PushSender.register()
 
 
 @admin.register(FCMDevice)

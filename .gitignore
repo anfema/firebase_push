@@ -6,3 +6,5 @@ static/
 demo/settings/local.py
 
 __pycache__
+
+serviceaccount.json
