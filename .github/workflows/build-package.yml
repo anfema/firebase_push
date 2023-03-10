@@ -1,0 +1,51 @@
+on:
+  release:
+    types: [published]
+
+name: Create package and attach to GitHub release on release publish
+jobs:
+  build-package:
+    name: Create release-artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          # cache: 'pip'
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade packaging setuptools flit build
+      - name: Check package version (compare package version with tag)
+        id: check_package_version
+        shell: python
+        run: |
+          import pathlib, tempfile
+          from packaging.version import parse
+          from flit.wheel import WheelBuilder
+          with tempfile.TemporaryFile() as tmp_fp:
+            package_version = WheelBuilder.from_ini_path(pathlib.Path('pyproject.toml'), tmp_fp).metadata.version
+          if parse(package_version) != parse('${{ github.event.release.tag_name }}'):
+            print(f'version mismatch: {package_version} (package) vs ${{ github.event.release.tag_name }} (tag)')
+            exit(1)
+      - name: Build wheel
+        run: |
+          python -m build --wheel
+      - name: Update release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*"
+          allowUpdates: true
+      - name: Push to private PyPi repo
+        run: |
+          pip install twine
+          twine upload \
+            --repository-url http://algeciras.anfema.net:8200/upload/ \
+            -u __token__ \
+            -p ${{ secrets.PRIVATE_PYPI_TOKEN }} \
+            --non-interactive \
+            --verbose \
+            dist/*

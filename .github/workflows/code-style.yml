@@ -1,0 +1,43 @@
+name: Python Code Style
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "**.py"
+  push:
+    branches: [main, develop]
+    paths:
+      - "**.py"
+
+jobs:
+  code-style-checks:
+    name: Python Code Style Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout commit
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 2
+      # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: "pipenv"
+          cache-dependency-path: |
+            Pipfile.lock
+      - name: Install pipenv
+        run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+      - name: Install project dependencies
+        run: pipenv install
+      - name: Check imports
+        uses: isort/isort-action@v1.0.0
+      - name: Check formatting
+        uses: psf/black@stable
+      - name: Install flake8
+        run: pip install -U flake8
+      - name: Setup flake8 annotations
+        uses: rbialon/flake8-annotations@v1
+      - name: Linting (flake8)
+        uses: py-actions/flake8@v2.2.1
