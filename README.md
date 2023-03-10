@@ -1,5 +1,13 @@
 Firebase cloud messaging for Django with original Google SDK.
 
+## Changelog
+
+- 2023-03-10: Version `0.1.0`
+  - First beta release
+  - Standard push notifications
+  - Localized push notifications
+  - Sending in foreground and background with celery
+
 ## Installation
 
 1. Requirements
@@ -71,7 +79,29 @@ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service_account.json
 
 ## Running
 
-// TODO: Add information about celery
+If you send your push notifications without `sync=True` you will need a running
+celery worker.
+
+To configure celery you will need at least the following in your `settings.py`
+
+```python
+# Celery broker URL for redis transport
+CELERY_BROKER_URL = f"redis://localhost:6379/1"
+```
+
+To start the celery worker user something like this:
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=serviceaccount.json # Point this to the google service account
+export DJANGO_SETTINGS_MODULE=demo.settings.native # Point this to your config
+celery --app demo worker # demo here stands as placeholder for your application
+```
+
+To send Push Notifications manually there is an entry in the Django admin:
+
+![Admin list entry](doc/admin_overview.png)
+
+![Admin form](doc/admin_form.png)
 
 ## API Endpoints for devices
 
