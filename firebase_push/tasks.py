@@ -21,7 +21,7 @@ firebase = firebase_admin.initialize_app()
 
 @shared_task(autoretry_for=FCM_RETRY_EXCEPTIONS, retry_backoff=True)
 def send_message(message: str):
-    message = PushMessageBase.deserialize(message)
+    message = PushMessageBase.from_json(message)
     messages = message.fanout()
     for history_items, message in messages:
         error = None

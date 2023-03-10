@@ -86,9 +86,9 @@ class PushMessageBase:
 
     def serialize(self) -> dict[str, Any]:
         return dict(
-            __class__:".".join((self.__class__.__module__, self.__class__.__name__)),
+            _class=".".join((self.__class__.__module__, self.__class__.__name__)),
             _topics=self._topics,
-            _devices=self._devicee,
+            _devices=self._devices,
             _users=self._users,
             collapse_id=self.collapse_id,
             badge_count=self.badge_count,
@@ -101,32 +101,32 @@ class PushMessageBase:
             is_priority=self.is_priority,
             web_actions=self.web_actions,
             web_icon=self.web_icon,
-            uuid=self.uuid
+            uuid=self.uuid,
         )
 
-    def deserialize(self, data:dict[str, Any]):
-        self._topics = data['_topics']
-        self._devices = data['_devices']
-        self._users = data['_users']
-        self.collapse_id = data['collapse_id']
-        self.badge_count = data['badge_count']
-        self.data_available = data['data_available']
-        self.sound = data['sound']
-        self.data = data['data']
-        self.android_icon = data['android_icon']
-        self.color = data['color']
-        self.expiration = data['expiration']
-        self.is_priority = data['is_priority']
-        self.web_actions = data['web_actions']
-        self.web_icon = data['web_icon']
-        self.uuid = data['uuid']
+    def deserialize(self, data: dict[str, Any]):
+        self._topics = data["_topics"]
+        self._devices = data["_devices"]
+        self._users = data["_users"]
+        self.collapse_id = data["collapse_id"]
+        self.badge_count = data["badge_count"]
+        self.data_available = data["data_available"]
+        self.sound = data["sound"]
+        self.data = data["data"]
+        self.android_icon = data["android_icon"]
+        self.color = data["color"]
+        self.expiration = data["expiration"]
+        self.is_priority = data["is_priority"]
+        self.web_actions = data["web_actions"]
+        self.web_icon = data["web_icon"]
+        self.uuid = data["uuid"]
 
     @classmethod
-    def deserialize(cls, data: str) -> Self:
+    def from_json(cls, data: str) -> Self:
         tree = json.loads(data)
 
         # try instanciating class from serialized data
-        klass = import_string(tree["__class__"])
+        klass = import_string(tree["_class"])
         c = klass()
         c.deserialize(tree)
         return c
@@ -373,7 +373,7 @@ class PushMessageBase:
         # Web specific
         actions: list[WebpushNotificationAction] = []
         if self.web_actions:
-            for (title, action, icon) in self.web_actions:
+            for title, action, icon in self.web_actions:
                 actions.append(WebpushNotificationAction(action, title, icon))
 
         web_notification = WebpushNotification(
