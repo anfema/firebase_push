@@ -1,4 +1,5 @@
-from typing import Optional, Any
+from typing import Any, Optional
+
 from firebase_admin.messaging import Message, Notification
 
 from .base import PushMessageBase

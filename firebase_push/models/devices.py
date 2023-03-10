@@ -1,6 +1,6 @@
+from django.conf import settings
 from django.db import models
 
-from django.conf import settings
 
 UserModel = settings.FCM_USER_MODEL or settings.AUTH_USER_MODEL
 

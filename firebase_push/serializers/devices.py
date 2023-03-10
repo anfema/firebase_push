@@ -1,9 +1,9 @@
+from django.conf import settings
+from django.utils.module_loading import import_string
 from rest_framework import serializers
 
 from firebase_push.models import FCMDevice, FCMTopic
 
-from django.conf import settings
-from django.utils.module_loading import import_string
 
 get_user = import_string(settings.FCM_FETCH_USER_FUNCTION)
 

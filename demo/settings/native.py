@@ -6,9 +6,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")  # set environment variables from .env.
 
 from .base import *  # noqa
+
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases

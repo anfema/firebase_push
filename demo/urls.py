@@ -19,6 +19,7 @@ from django.urls import path
 
 from firebase_push.conf.urls import urlpatterns as firebase_push_urlpatterns  # Use default urlpatterns
 
+
 urlpatterns = [
     path("admin/", admin.site.urls),
 ] + firebase_push_urlpatterns

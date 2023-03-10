@@ -1,6 +1,8 @@
 from datetime import timedelta
-from django.utils import timezone
+
 from django.core.management.base import BaseCommand
+from django.utils import timezone
+
 from firebase_push.models import FCMDevice
 
 

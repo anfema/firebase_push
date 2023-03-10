@@ -1,29 +1,28 @@
-from typing import Optional, Union, Tuple, Any, Self
-from datetime import datetime
-import json
 import inspect
+import json
 from copy import copy
+from datetime import datetime
+from typing import Any, Optional, Self, Tuple, Union
 from uuid import uuid4
 
+from django.conf import settings
+from django.db.models import Model, Q, QuerySet
+from django.utils.module_loading import import_string
 from firebase_admin.messaging import (
-    Message,
     AndroidConfig,
     AndroidNotification,
-    WebpushConfig,
-    WebpushNotification,
-    WebpushNotificationAction,
     APNSConfig,
     APNSPayload,
     Aps,
+    Message,
+    WebpushConfig,
+    WebpushNotification,
+    WebpushNotificationAction,
 )
 
-from django.utils.module_loading import import_string
-from django.db.models import Model, QuerySet, Q
-from django.conf import settings
-
-from firebase_push.models import FCMDevice, FCMTopic, FCMHistoryBase
-
+from firebase_push.models import FCMDevice, FCMHistoryBase, FCMTopic
 from firebase_push.tasks import send_message
+
 
 if settings.FCM_USER_MODEL:
     UserModel: Model = import_string(settings.FCM_USER_MODEL)

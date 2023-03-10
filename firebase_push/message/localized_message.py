@@ -1,24 +1,22 @@
-from typing import Sequence, Optional, Any
-from datetime import datetime
 import re
+from datetime import datetime
+from typing import Any, Optional, Sequence
 
+from django.conf import settings
+from django.utils.text import format_lazy
+from django.utils.translation import gettext_lazy as _
 from firebase_admin.messaging import (
-    Message,
     AndroidConfig,
     AndroidNotification,
-    WebpushConfig,
-    WebpushNotification,
-    WebpushNotificationAction,
     APNSConfig,
     APNSPayload,
     Aps,
     ApsAlert,
+    Message,
+    WebpushConfig,
+    WebpushNotification,
+    WebpushNotificationAction,
 )
-
-from django.utils.translation import gettext_lazy as _
-from django.utils.text import format_lazy
-
-from django.conf import settings
 
 from .base import PushMessageBase
 

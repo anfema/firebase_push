@@ -1,9 +1,10 @@
 from typing import Any
-from django.db.models import QuerySet
-from django.utils.module_loading import import_string
-from django.http import HttpRequest
-from django.contrib import admin
+
 from django.conf import settings
+from django.contrib import admin
+from django.db.models import QuerySet
+from django.http import HttpRequest
+from django.utils.module_loading import import_string
 
 from firebase_push.models import FCMDevice, FCMTopic
 

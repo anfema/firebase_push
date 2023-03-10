@@ -4,9 +4,11 @@ Django settings for firebase-push demo project running in docker.
 import os
 from pathlib import Path
 
+
 BASE_DIR = Path("/code/")
 
 from .base import *  # noqa
+
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases

@@ -1,18 +1,16 @@
 from datetime import datetime
-from typing import Sequence, Union, TYPE_CHECKING
-
 from traceback import format_exception
+from typing import TYPE_CHECKING, Sequence, Union
 
 import firebase_admin
 import google
-
+from celery import shared_task
 from django.conf import settings
 from django.db.models import Model, QuerySet
-
-from celery import shared_task
 from requests import HTTPError, Timeout
 
 from firebase_push.models import FCMHistoryBase
+
 
 if TYPE_CHECKING:
     from .message import PushMessageBase

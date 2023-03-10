@@ -11,6 +11,7 @@ import os
 import socket
 from pathlib import Path
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 if "BASE_DIR" not in locals():
     BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -101,5 +102,6 @@ STATIC_URL = "static/"
 MEDIA_URL = "media/"
 
 from firebase_push.conf.settings import *
+
 
 FCM_PUSH_HISTORY_MODEL = "demo_app.models.FCMHistory"
