@@ -1,19 +1,14 @@
-from datetime import datetime
 from traceback import format_exception
-from typing import TYPE_CHECKING, Sequence, Union
 
 import firebase_admin
 import google
 from celery import shared_task
-from django.conf import settings
-from django.db.models import Model, QuerySet
 from requests import HTTPError, Timeout
 
 from firebase_push.models import FCMHistoryBase
 
+from .message import PushMessageBase
 
-if TYPE_CHECKING:
-    from .message import PushMessageBase
 
 FCM_RETRY_EXCEPTIONS = (HTTPError, Timeout)
 firebase = firebase_admin.initialize_app()

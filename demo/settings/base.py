@@ -8,7 +8,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
-import socket
 from pathlib import Path
 
 
@@ -101,7 +100,7 @@ MEDIA_ROOT = BASE_DIR / "media/"
 STATIC_URL = "static/"
 MEDIA_URL = "media/"
 
-from firebase_push.conf.settings import *
+from firebase_push.conf.settings import *  # noqa
 
 
 FCM_PUSH_HISTORY_MODEL = "demo_app.models.FCMHistory"
