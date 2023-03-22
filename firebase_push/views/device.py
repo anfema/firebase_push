@@ -7,7 +7,10 @@ from firebase_push.models import FCMDevice
 from firebase_push.serializers import FCMDeviceSerializer
 
 
-get_user = import_string(settings.FCM_FETCH_USER_FUNCTION)
+try:
+    get_user = import_string(settings.FCM_FETCH_USER_FUNCTION)
+except AttributeError:
+    get_user = import_string("firebase_push.defaults.get_user")
 
 
 class DeviceRegistrationViewSet(ModelViewSet):

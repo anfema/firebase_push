@@ -2,7 +2,6 @@ from typing import Any
 
 from django.conf import settings
 from django.contrib import admin
-from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import QuerySet
 from django.http import HttpRequest
@@ -12,8 +11,10 @@ from etc.admin import CustomModelPage, admins
 from firebase_push.models import FCMDevice, FCMTopic
 
 
-UserModel = settings.FCM_USER_MODEL or settings.AUTH_USER_MODEL
-User = get_user_model()
+try:
+    UserModel = settings.FCM_USER_MODEL
+except AttributeError:
+    UserModel = settings.AUTH_USER_MODEL
 
 
 class PushSenderAdmin(admins.CustomPageModelAdmin):

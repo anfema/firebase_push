@@ -2,7 +2,10 @@ from django.conf import settings
 from django.db import models
 
 
-UserModel = settings.FCM_USER_MODEL or settings.AUTH_USER_MODEL
+try:
+    UserModel = settings.FCM_USER_MODEL
+except AttributeError:
+    UserModel = settings.AUTH_USER_MODEL
 
 
 class FCMDevice(models.Model):
