@@ -5,7 +5,7 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "firebase_push"
 description = "Firebase push notifications for Django, based on official SDK"
-# readme = "README.md"
+readme = "README.md"
 keywords = ["django", "utils"]
 license = {text = "MIT"}
 classifiers = [
