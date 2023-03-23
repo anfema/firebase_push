@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "demo_app",
     "firebase_push",
     "rest_framework",
+    "admin_extra_buttons",
     "django_celery_results",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -99,8 +100,5 @@ MEDIA_ROOT = BASE_DIR / "media/"
 
 STATIC_URL = "static/"
 MEDIA_URL = "media/"
-
-from firebase_push.conf.settings import *  # noqa
-
 
 FCM_PUSH_HISTORY_MODEL = "demo_app.models.FCMHistory"

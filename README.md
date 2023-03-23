@@ -30,6 +30,7 @@ Firebase cloud messaging for Django with original Google SDK.
     INSTALLED_APPS = [
         "firebase_push",
         "rest_framework",
+        "admin_extra_buttons",
         ...
     ]
     ```
@@ -97,11 +98,9 @@ export DJANGO_SETTINGS_MODULE=demo.settings.native # Point this to your config
 celery --app demo worker # demo here stands as placeholder for your application
 ```
 
-To send Push Notifications manually there is an entry in the Django admin:
+To send Push Notifications manually there is an extra button in the Django admin for the `FCMHistory` class:
 
-![Admin list entry](doc/admin_overview.png)
-
-![Admin form](doc/admin_form.png)
+![Send notification button screenshot](doc/send_notification_button.png)
 
 ## API Endpoints for devices
 

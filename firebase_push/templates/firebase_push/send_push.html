@@ -1,0 +1,23 @@
+{% extends "admin_extra_buttons/action_page.html" %}
+{% load i18n static admin_list admin_urls %}
+
+{% block action-content %}
+    <form method="post" enctype="multipart/form-data">
+        <fieldset class="module aligned">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-row">
+                    <div>
+                        {{ field.errors }}
+                        {{ field.label_tag }} {{ field }}
+                    </div>
+                </div>
+            {% endfor %}
+        </fieldset>
+        <div class="submit-row">
+            <input type="submit" class="default" value="{% trans "Send" %}" />
+        </div>
+    </form>
+    {% if import_results %}
+    {% endif %}
+{% endblock action-content %}

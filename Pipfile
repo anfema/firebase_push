@@ -15,7 +15,7 @@ redis = "*"
 psycopg2 = "*"
 python-dotenv = "*"
 watchfiles = "*"
-django-etc = "*"
+django-admin-extra-buttons = "*"
 
 [dev-packages]
 black = "*"
