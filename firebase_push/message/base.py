@@ -20,16 +20,13 @@ from firebase_admin.messaging import (
     WebpushNotificationAction,
 )
 
-from firebase_push.models import FCMDevice, FCMHistoryBase, FCMTopic
+from firebase_push.models import FCMHistoryBase, FCMTopic
 from firebase_push.tasks import send_message
+from firebase_push.utils import get_device_model, get_history_model
 
 
-try:
-    UserModel: Model = import_string(settings.FCM_USER_MODEL)
-except AttributeError:
-    UserModel = get_user_model()
-
-FCMHistory: FCMHistoryBase = import_string(settings.FCM_PUSH_HISTORY_MODEL)
+FCMHistory = get_history_model()
+FCMDevice = get_device_model()
 
 
 class PushMessageBase:
@@ -173,22 +170,23 @@ class PushMessageBase:
 
     @property
     def users(self) -> Optional[QuerySet]:
+        UserModel = FCMDevice._meta.get_field("user").related_model
         return UserModel.objects.filter(pk__in=self._users)
 
     @users.setter
     def users(self, value: QuerySet):
         self._users = value.values_list("pk", flat=True)
 
-    def add_user(self, user: UserModel):
+    def add_user(self, user: Model):
         self._users.append(user.pk)
 
-    def remove_user(self, user: UserModel):
+    def remove_user(self, user: Model):
         self._users.remove(user.pk)
 
     def create_history_entries(
         self,
         message: Message,
-        user: Optional[UserModel] = None,
+        user: Optional[Model] = None,
         topic: Optional[str] = None,
         device: Optional[FCMDevice] = None,
     ) -> list[FCMHistoryBase]:
@@ -299,7 +297,7 @@ class PushMessageBase:
         """Send a fully configured message in the background
 
         Raises:
-            UserModel.DoesNotExist: If a user is configured and does not exist anymore
+            <User>.DoesNotExist: If a user is configured and does not exist anymore
             FCMDevice.DoesNotExist: If a device has been configured that does not exist anymore
             ValueError: When neither user, topic or device is configured
             AttributeError: When sending to a device but the device does not subscribe to the topic or is disabled
@@ -310,6 +308,7 @@ class PushMessageBase:
         serialized = json.dumps(self.serialize())
         if self._users:
             if not self.users.exists():
+                UserModel = FCMDevice._meta.get_field("user").related_model
                 raise UserModel.DoesNotExist
             if sync:
                 return send_message(serialized)

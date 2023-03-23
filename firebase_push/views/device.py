@@ -3,9 +3,11 @@ from django.shortcuts import get_object_or_404
 from django.utils.module_loading import import_string
 from rest_framework.viewsets import ModelViewSet
 
-from firebase_push.models import FCMDevice
 from firebase_push.serializers import FCMDeviceSerializer
+from firebase_push.utils import get_device_model
 
+
+FCMDevice = get_device_model()
 
 try:
     get_user = import_string(settings.FCM_FETCH_USER_FUNCTION)

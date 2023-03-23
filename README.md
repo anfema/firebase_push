@@ -2,6 +2,9 @@ Firebase cloud messaging for Django with original Google SDK.
 
 ## Changelog
 
+- 2023-03-23: Version `0.2.0`
+  - Overhaul `FCMDevice` to be customizable
+  - Remove `FCM_USER_MODEL` and add `FCM_DEVICE_MODEL` config settings (see below)
 - 2023-03-10: Version `0.1.0`
   - First beta release
   - Standard push notifications
@@ -34,16 +37,20 @@ Firebase cloud messaging for Django with original Google SDK.
         ...
     ]
     ```
-4. Add a `FCMHistory` class to your application:
+4. Add a `FCMHistory` and `FCMDevice` class to your application:
   ```python
-  from firebase_push.models import FCMHistoryBase
+  from firebase_push.models import FCMHistoryBase, FCMDeviceBase
 
   class FCMHistory(FCMHistoryBase):
     pass
+
+  class FCMDevice(FCMDeviceBase):
+    pass
   ```
-5. Point the setting `FCM_PUSH_HISTORY_MODEL` to that class path:
+5. Point the setting `FCM_PUSH_HISTORY_MODEL` and `FCM_DEVICE_MODEL` to that class:
   ```python
-  FCM_PUSH_HISTORY_MODEL = "demo.models.FCMHistory"
+  FCM_PUSH_HISTORY_MODEL = "demo.FCMHistory"
+  FCM_DEVICE_MODEL = "demo.FCMDevice"
   ```
 6. Run `manage.py makemigrations` and `manage.py migrate`
 5. Do not forget to configure REST-Framework authentication (or supply CSRF
@@ -68,14 +75,10 @@ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service_account.json
 
 ### Optional
 
-- `FCM_USER_MODEL`: (path) override this if you need to attach anything other
-  than the Django defined user model (configured by `settings.AUTH_USER_MODEL`)
-  to your FCM device. (Note: if you override this, the user cannot be fetched
-  from the session so you'll need to override the next option too.)
 - `FCM_FETCH_USER_FUNCTION`: (path) path to the function to call in your code
   to fetch a user id to attach to the request. Will be called with the Django
   `request` as single parameter, expected to return an id to a DB model
-  instance of `FCM_USER_MODEL`.
+  instance of the model used in your `FCMDevice` class.
 
 
 ## Running
@@ -156,12 +159,13 @@ will be deleted from the server if the current user owns it and you will receive
 
 There are 3 Models of which one is an abstract model.
 
-1. `FCMDevice`: The device registration, contains FCM tokens and some metadata about the device
+1. `FCMDevice` aka `FCMDeviceBase`: The device registration, contains FCM tokens and some metadata about the device.
+  You can override the `user` field or add your own fields to modify this class.
 2. `FCMTopic`: A topic for which a device can register. Can be used to filter which messages to send to which devices
 3. `FCMHistory` aka `FCMHistoryBase`: This is the abstract model for the push notification history. You can add your
   own fields to this to save additional information about a message.
 
-### `FCMDevice`
+### `FCMDeviceBase`
 
 - `registration_id` the FCM Token
 - `user` user to which this device belongs, devices will cascade delete with this user

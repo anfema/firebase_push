@@ -100,4 +100,5 @@ MEDIA_ROOT = BASE_DIR / "media/"
 STATIC_URL = "static/"
 MEDIA_URL = "media/"
 
-FCM_PUSH_HISTORY_MODEL = "demo_app.models.FCMHistory"
+FCM_PUSH_HISTORY_MODEL = "demo_app.FCMHistory"
+FCM_DEVICE_MODEL = "demo_app.FCMDevice"

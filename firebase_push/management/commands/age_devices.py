@@ -3,7 +3,10 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from firebase_push.models import FCMDevice
+from firebase_push.utils import get_device_model
+
+
+FCMDevice = get_device_model()
 
 
 def age_devices(days: int):

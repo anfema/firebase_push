@@ -1,6 +1,6 @@
-from .devices import FCMDevice
+from .devices import FCMDeviceBase
 from .history import FCMHistoryBase
 from .topics import FCMTopic
 
 
-__all__ = ["FCMDevice", "FCMHistoryBase", "FCMTopic"]
+__all__ = ["FCMDeviceBase", "FCMHistoryBase", "FCMTopic"]

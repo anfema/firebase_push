@@ -1,4 +1,4 @@
-from .fcm_history import FCMHistory
+from .fcm import FCMDevice, FCMHistory
 
 
-__all__ = ["FCMHistory"]
+__all__ = ["FCMHistory", "FCMDevice"]

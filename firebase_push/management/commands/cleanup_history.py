@@ -1,15 +1,14 @@
 from datetime import timedelta
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from django.utils.module_loading import import_string
 
 from firebase_push.models import FCMHistoryBase
+from firebase_push.utils import get_history_model
 
 
 def cleanup_history(days: int):
-    FCMHistory = import_string(settings.FCM_PUSH_HISTORY_MODEL)
+    FCMHistory = get_history_model()
     entries = FCMHistory.objects.filter(updated_at__lt=timezone.now() - timedelta(days=days))
     pending = entries.filter(status=FCMHistoryBase.Status.PENDING).count()
     sent = entries.filter(status=FCMHistoryBase.Status.SENT).count()
