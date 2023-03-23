@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     "firebase_push",
     "rest_framework",
     "admin_extra_buttons",
-    "django_celery_results",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
