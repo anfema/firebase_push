@@ -56,7 +56,10 @@ class FCMHistoryAdmin(ExtraButtonsMixin, admin.ModelAdmin):
         return super().get_queryset(request).select_related("topic", "device")
 
     def registration_id(self, instance):
-        return instance.device.registration_id
+        if instance.device:
+            return instance.device.registration_id
+        else:
+            return "-"
 
     def topic(self, instance):
         return instance.topic.name
