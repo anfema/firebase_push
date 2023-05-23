@@ -49,3 +49,11 @@ jobs:
             --non-interactive \
             --verbose \
             dist/*
+      - name: Push to PyPi
+        run: |
+          twine upload \
+            -u __token__ \
+            -p ${{ secrets.PYPI_TOKEN }} \
+            --non-interactive \
+            --verbose \
+            dist/*
