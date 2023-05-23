@@ -6,7 +6,10 @@ from celery import shared_task
 from requests import HTTPError, Timeout
 
 from firebase_push.models import FCMHistoryBase
+from firebase_push.utils import get_device_model
 
+
+FCMDevice = get_device_model()
 
 FCM_RETRY_EXCEPTIONS = (HTTPError, Timeout)
 firebase = firebase_admin.initialize_app()
@@ -27,6 +30,12 @@ def send_message(message: str):
             error = e
         except google.auth.exceptions.DefaultCredentialsError as e:
             error = e
+        except firebase_admin._messaging_utils.UnregisteredError as e:
+            # Remove Token from devices
+            FCMDevice.objects.filter(registration_id=message.token).delete()
+            for history in history_items:
+                history.device = None
+            error = e
 
         # Now update the history objects
         for history in history_items:
@@ -37,7 +46,9 @@ def send_message(message: str):
                 if response:
                     history.error_message = repr(response.exception)
                 elif error is not None:
-                    history.error_message = format_exception(error)
+                    history.error_message = "\n".join(format_exception(error))
+                    history.error_message += "\n\nMessage:\n"
+                    history.error_message += str(message)
                 else:
                     history.error_message = "Unknown error"
             history.save()
