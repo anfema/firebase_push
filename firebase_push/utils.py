@@ -1,7 +1,6 @@
 from django.apps import apps as django_apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.module_loading import import_string
 
 
 def get_device_model():

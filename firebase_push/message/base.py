@@ -5,7 +5,6 @@ from typing import Any, Optional, Self, Tuple, Union
 from uuid import uuid4
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.db.models import Model, QuerySet
 from django.utils.module_loading import import_string
 from firebase_admin.messaging import (
