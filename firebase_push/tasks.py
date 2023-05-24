@@ -26,26 +26,23 @@ def send_message(message: str):
         response = None
         try:
             response = firebase_admin.messaging.send(message, app=firebase)
-        except firebase_admin.exceptions.InvalidArgumentError as e:
-            error = e
-        except google.auth.exceptions.DefaultCredentialsError as e:
-            error = e
         except firebase_admin._messaging_utils.UnregisteredError as e:
             # Remove Token from devices
             FCMDevice.objects.filter(registration_id=message.token).delete()
             for history in history_items:
                 history.device = None
             error = e
+        except Exception as e:
+            error = e
 
         # Now update the history objects
         for history in history_items:
-            if response is not None and response.success:
-                history.status = FCMHistoryBase.Status.SUCCESS
+            if response is not None and isinstance(response, str) and error is None:
+                history.status = FCMHistoryBase.Status.SENT
+                history.error_message = response
             else:
                 history.status = FCMHistoryBase.Status.FAILED
-                if response:
-                    history.error_message = repr(response.exception)
-                elif error is not None:
+                if error is not None:
                     history.error_message = "\n".join(format_exception(error))
                     history.error_message += "\n\nMessage:\n"
                     history.error_message += str(message)
