@@ -210,9 +210,7 @@ class MyPushMessage(PushMessage):
 
   def serialize(self) -> dict[str, Any]:
     result = super().serialize()
-    result.update(dict(
-      foobar=self.foobar
-    ))
+    result.update(foobar=self.foobar)
     return result
 
   def deserialize(self, data: dict[str, Any]):
