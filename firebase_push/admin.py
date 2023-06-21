@@ -24,6 +24,8 @@ class FCMDeviceAdmin(admin.ModelAdmin):
     ordering = ("updated_at",)
     search_fields = ("registration_id", "app_version")
     list_display = ("registration_id", "platform", "app_version")
+    raw_id_fields = ("user",)
+    list_filter = ("device",)
 
 
 @admin.register(FCMTopic)
@@ -51,6 +53,8 @@ class FCMHistoryAdmin(ExtraButtonsMixin, admin.ModelAdmin):
     ordering = ("updated_at",)
     search_fields = ("topic__name", "device__registration_id", "error_message")
     list_display = ("registration_id", "topic", "status", "created_at", "updated_at")
+    raw_id_fields = ("user", "device")
+    list_filter = ("status",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
         return super().get_queryset(request).select_related("topic", "device")
