@@ -25,7 +25,7 @@ class FCMDeviceAdmin(admin.ModelAdmin):
     search_fields = ("registration_id", "app_version")
     list_display = ("registration_id", "platform", "app_version")
     raw_id_fields = ("user",)
-    list_filter = ("device",)
+    list_filter = ("platform", "app_version")
 
 
 @admin.register(FCMTopic)
