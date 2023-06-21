@@ -1,7 +1,6 @@
 from traceback import format_exception
 
 import firebase_admin
-import google
 from celery import shared_task
 from requests import HTTPError, Timeout
 
