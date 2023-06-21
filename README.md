@@ -204,7 +204,7 @@ from firebase_push.message import PushMessage
 
 class MyPushMessage(PushMessage):
 
-  def __init__(self, title: str, body: str, link: Optional[str]=None, foobar: str="nothing"):
+  def __init__(self, title: str = "", body: str = "", link: Optional[str]=None, foobar: str = "nothing"):
     super().__init(title, body, link=link)
     self.foobar = foobar
 
