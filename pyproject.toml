@@ -14,12 +14,13 @@ classifiers = [
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries",
 ]
 dynamic = ["version"]
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
     "Django>=4.1",
     "celery>=5.2",
@@ -49,7 +50,7 @@ name = "firebase_push"
 
 
 [tool.black]
-target-version = ['py311']
+target-version = ['py310']
 line-length = 120
 
 
