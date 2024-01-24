@@ -19,10 +19,11 @@ RUN groupadd --gid $USER_GID $USERNAME \
 WORKDIR /code
 
 # copy files required to build/install dependencies (this should cache the next `RUN` if none of the files was changed)
-COPY Pipfile Pipfile.lock pyproject.toml /code/
+COPY Pipfile Pipfile.lock pyproject.toml README.md /code/
 COPY firebase_push/__init__.py /code/firebase_push/
 
-RUN python -m pip install pipenv && pipenv sync --system --dev && rm -rf ~/.cache ~/.local
+RUN --mount=type=cache,target=/root/.cache,sharing=locked,id=firebase-push-python \
+    python -m pip install pipenv && pipenv sync --system --dev && rm -rf ~/.local
 
 # COPY . /code/
 VOLUME /code
