@@ -1,14 +1,15 @@
-from typing import Any
-
 from admin_extra_buttons.api import ExtraButtonsMixin, button
 from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin import SimpleListFilter
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.contrib.auth import get_user_model
-from django.db.models import Count, QuerySet
+from django.db.models import Count, Q
 from django.http import HttpRequest
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
+from django.utils.safestring import SafeString
+from django.utils.translation import gettext_lazy as _
 
 from firebase_push.models import FCMTopic
 from firebase_push.utils import get_device_model, get_history_model
@@ -20,12 +21,45 @@ FCMDevice = get_device_model()
 UserModel = FCMDevice._meta.get_field("user").related_model
 
 
+class IsActiveFilter(SimpleListFilter):
+    title = _("is active")
+    parameter_name = "is_active"
+
+    def lookups(self, request, model_admin):
+        return [
+            ("1", _("Yes")),
+            ("0", _("No")),
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == "1":
+            return queryset.filter(is_active=True)
+        if self.value() == "0":
+            return queryset.filter(is_active=False)
+
+
 class FCMDeviceAdmin(admin.ModelAdmin):
     ordering = ("updated_at",)
     search_fields = ("registration_id", "app_version")
-    list_display = ("registration_id", "platform", "app_version")
+    list_display = (
+        "registration_id",
+        "platform",
+        "app_version",
+        "created_at",
+        "updated_at",
+        "is_active",
+        "disabled_at",
+    )
+    list_filter = (IsActiveFilter, "platform", "app_version")
     raw_id_fields = ("user",)
-    list_filter = ("platform", "app_version")
+    readonly_fields = ("created_at", "updated_at")
+
+    def get_queryset(self, request: HttpRequest):
+        return super().get_queryset(request).annotate(is_active=Q(disabled_at__isnull=True))
+
+    @admin.display(boolean=True, ordering="is_active")
+    def is_active(self, instance) -> bool:
+        return instance.is_active
 
 
 @admin.register(FCMTopic)
@@ -34,8 +68,12 @@ class FCMTopicAdmin(admin.ModelAdmin):
     search_fields = ("name", "description")
     list_display = ("name", "description", "subscribers")
 
-    def subscribers(self, instance):
-        return instance.devices.count()
+    def get_queryset(self, request: HttpRequest):
+        return super().get_queryset(request).annotate(device_count=Count("devices"))
+
+    @admin.display(ordering="device_count")
+    def subscribers(self, instance) -> int:
+        return instance.device_count
 
 
 class PushNotificationForm(forms.Form):
@@ -53,19 +91,21 @@ class FCMHistoryAdmin(ExtraButtonsMixin, admin.ModelAdmin):
     ordering = ("updated_at",)
     search_fields = ("topic__name", "device__registration_id", "error_message")
     list_display = ("registration_id", "topic", "status", "created_at", "updated_at")
-    raw_id_fields = ("user", "device")
     list_filter = ("status",)
+    raw_id_fields = ("user", "device", "topic")
+    readonly_fields = ("created_at", "updated_at")
 
-    def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
+    def get_queryset(self, request: HttpRequest):
         return super().get_queryset(request).select_related("topic", "device")
 
-    def registration_id(self, instance):
+    @admin.display
+    def registration_id(self, instance) -> str | SafeString:
         if instance.device:
             return instance.device.registration_id
-        else:
-            return "-"
+        return self.get_empty_value_display()
 
-    def topic(self, instance):
+    @admin.display
+    def topic(self, instance) -> str:
         return instance.topic.name
 
     @button()
