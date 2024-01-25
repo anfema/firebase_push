@@ -26,7 +26,8 @@ dependencies = [
     "celery>=5.2",
     "firebase-admin>=6.0",
     "django-admin-extra-buttons",
-    "djangorestframework>=3.14.0"
+    "djangorestframework>=3.14.0",
+    "typing_extensions >= 4.1; python_version < '3.11'",
 ]
 authors = [{name = "Johannes Schriewer", email = "j.schriewer@anfe.ma"}]
 
