@@ -82,7 +82,10 @@ class PushNotificationForm(forms.Form):
     link = forms.CharField(max_length=1024, label="Link", required=False)
 
     user = forms.ModelChoiceField(
-        UserModel.objects.annotate(device_count=Count("fcmdevice")).filter(device_count__gt=0), empty_label="User"
+        UserModel.objects.annotate(device_count=Count(FCMDevice._meta.get_field("user").related_query_name())).filter(
+            device_count__gt=0
+        ),
+        empty_label="User",
     )
     topic = forms.ModelChoiceField(FCMTopic.objects.all(), required=False)
 
