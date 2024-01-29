@@ -1,7 +1,7 @@
 import json
 from copy import copy
 from datetime import datetime
-from typing import Any, Optional, Self, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 from uuid import uuid4
 
 from django.conf import settings
@@ -18,6 +18,7 @@ from firebase_admin.messaging import (
     WebpushNotification,
     WebpushNotificationAction,
 )
+from typing_extensions import Self
 
 from firebase_push.models import FCMHistoryBase, FCMTopic
 from firebase_push.tasks import send_message
