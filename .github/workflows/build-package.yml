@@ -39,6 +39,9 @@ jobs:
         with:
           artifacts: "dist/*"
           allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          omitPrereleaseDuringUpdate: true
       - name: Push to private PyPi repo
         run: |
           pip install twine
@@ -50,10 +53,5 @@ jobs:
             --verbose \
             dist/*
       - name: Push to PyPi
-        run: |
-          twine upload \
-            -u __token__ \
-            -p ${{ secrets.PYPI_TOKEN }} \
-            --non-interactive \
-            --verbose \
-            dist/*
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # uses trusted publishing (no username & password required)
