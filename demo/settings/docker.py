@@ -1,6 +1,7 @@
 """
 Django settings for firebase-push demo project running in docker.
 """
+
 import os
 from pathlib import Path
 

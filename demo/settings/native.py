@@ -1,6 +1,7 @@
 """
 Django settings for firebase-push development project running on the host.
 """
+
 import os
 from pathlib import Path
 
