@@ -39,20 +39,20 @@ class IsActiveFilter(SimpleListFilter):
 
 
 class FCMDeviceAdmin(admin.ModelAdmin):
-    ordering = ("updated_at",)
-    search_fields = ("registration_id", "app_version")
     list_display = (
-        "registration_id",
+        "user",
         "platform",
+        "is_active",
         "app_version",
         "created_at",
         "updated_at",
-        "is_active",
         "disabled_at",
     )
     list_filter = (IsActiveFilter, "platform", "app_version")
+    ordering = ("updated_at",)
     raw_id_fields = ("user",)
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("created_at", "updated_at", "disabled_at")
+    search_fields = (f"user__{User.EMAIL_FIELD}", f"user__{User.USERNAME_FIELD}", "registration_id")
 
     def get_queryset(self, request: HttpRequest):
         return super().get_queryset(request).annotate(is_active=Q(disabled_at__isnull=True))
