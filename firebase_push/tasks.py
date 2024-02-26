@@ -2,6 +2,8 @@ from traceback import format_exception
 
 import firebase_admin
 from celery import shared_task
+from django.conf import settings
+from firebase_admin import credentials
 from requests import HTTPError, Timeout
 
 from firebase_push.models import FCMHistoryBase
@@ -11,7 +13,14 @@ from firebase_push.utils import get_device_model
 FCMDevice = get_device_model()
 
 FCM_RETRY_EXCEPTIONS = (HTTPError, Timeout)
-firebase = firebase_admin.initialize_app()
+
+
+if credentials_file := getattr(settings, "FCM_CREDENTIALS_FILE", None):
+    credential = credentials.Certificate(credentials_file)
+else:
+    credential = None
+
+firebase = firebase_admin.initialize_app(credential=credential)
 
 
 @shared_task(autoretry_for=FCM_RETRY_EXCEPTIONS, retry_backoff=True)
