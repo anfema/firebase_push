@@ -67,6 +67,8 @@ service account JSON file:
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service_account.json
 ```
 
+Alternatively you can use the django setting `FCM_CREDENTIALS_FILE` to provide the path.
+
 #### To generate a private key file for your service account:
 
 1. In the Firebase console, open **Settings** > [Service Accounts](https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk).
