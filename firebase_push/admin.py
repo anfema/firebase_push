@@ -52,10 +52,18 @@ class FCMDeviceAdmin(admin.ModelAdmin):
     ordering = ("updated_at",)
     raw_id_fields = ("user",)
     readonly_fields = ("created_at", "updated_at", "disabled_at")
-    search_fields = (f"user__{User.EMAIL_FIELD}", f"user__{User.USERNAME_FIELD}", "registration_id")
+    search_fields = ("registration_id",)
 
     def get_queryset(self, request: HttpRequest):
         return super().get_queryset(request).annotate(is_active=Q(disabled_at__isnull=True))
+
+    def get_search_fields(self, request: HttpRequest):
+        search_fields = list(super().get_search_fields(request))
+        if hasattr(User, "USERNAME_FIELD"):
+            search_fields.append(f"user__{User.USERNAME_FIELD}")
+        if hasattr(User, "EMAIL_FIELD"):
+            search_fields.append(f"user__{User.EMAIL_FIELD}")
+        return search_fields
 
     @admin.display(boolean=True, ordering="is_active")
     def is_active(self, instance) -> bool:
