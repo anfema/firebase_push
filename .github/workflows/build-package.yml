@@ -7,6 +7,11 @@ jobs:
   build-package:
     name: Create release-artifacts
     runs-on: ubuntu-latest
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+      # required by ncipollo/release-action@v1
+      contents: write
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v3
