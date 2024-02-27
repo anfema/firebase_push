@@ -3,7 +3,6 @@ from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin import SimpleListFilter
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
-from django.contrib.auth import get_user_model
 from django.db.models import Count, Q
 from django.http import HttpRequest
 from django.shortcuts import redirect
@@ -15,7 +14,6 @@ from firebase_push.models import FCMTopic
 from firebase_push.utils import get_device_model, get_history_model
 
 
-User = get_user_model()
 FCMHistory = get_history_model()
 FCMDevice = get_device_model()
 UserModel = FCMDevice._meta.get_field("user").related_model
@@ -59,10 +57,10 @@ class FCMDeviceAdmin(admin.ModelAdmin):
 
     def get_search_fields(self, request: HttpRequest):
         search_fields = list(super().get_search_fields(request))
-        if hasattr(User, "USERNAME_FIELD"):
-            search_fields.append(f"user__{User.USERNAME_FIELD}")
-        if hasattr(User, "EMAIL_FIELD"):
-            search_fields.append(f"user__{User.EMAIL_FIELD}")
+        if hasattr(UserModel, "USERNAME_FIELD"):
+            search_fields.append(f"user__{UserModel.USERNAME_FIELD}")
+        if hasattr(UserModel, "EMAIL_FIELD"):
+            search_fields.append(f"user__{UserModel.EMAIL_FIELD}")
         return search_fields
 
     @admin.display(boolean=True, ordering="is_active")
