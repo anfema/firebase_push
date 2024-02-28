@@ -3,7 +3,6 @@ from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin import SimpleListFilter
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
-from django.contrib.auth import get_user_model
 from django.db.models import Count, Q
 from django.http import HttpRequest
 from django.shortcuts import redirect
@@ -15,7 +14,6 @@ from firebase_push.models import FCMTopic
 from firebase_push.utils import get_device_model, get_history_model
 
 
-User = get_user_model()
 FCMHistory = get_history_model()
 FCMDevice = get_device_model()
 UserModel = FCMDevice._meta.get_field("user").related_model
@@ -52,10 +50,18 @@ class FCMDeviceAdmin(admin.ModelAdmin):
     ordering = ("updated_at",)
     raw_id_fields = ("user",)
     readonly_fields = ("created_at", "updated_at", "disabled_at")
-    search_fields = (f"user__{User.EMAIL_FIELD}", f"user__{User.USERNAME_FIELD}", "registration_id")
+    search_fields = ("registration_id",)
 
     def get_queryset(self, request: HttpRequest):
         return super().get_queryset(request).annotate(is_active=Q(disabled_at__isnull=True))
+
+    def get_search_fields(self, request: HttpRequest):
+        search_fields = list(super().get_search_fields(request))
+        if hasattr(UserModel, "USERNAME_FIELD"):
+            search_fields.append(f"user__{UserModel.USERNAME_FIELD}")
+        if hasattr(UserModel, "EMAIL_FIELD"):
+            search_fields.append(f"user__{UserModel.EMAIL_FIELD}")
+        return search_fields
 
     @admin.display(boolean=True, ordering="is_active")
     def is_active(self, instance) -> bool:
